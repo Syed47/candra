@@ -18,7 +18,7 @@ size_t vec_size(const VECTOR v)
 
 vec_t vec_get(const VECTOR v, int i)
 {
-	if (!(i > -1 && i < v->i))
+	if (v != NULL && !(i > -1 && i < v->i))
 	{
 		fprintf(stderr, "\nError: Invalid memory access not allowed <%d>.\n", i);
 		exit(EXIT_FAILURE);
@@ -37,10 +37,10 @@ bool vec_add(VECTOR v, vec_t val)
 		v->size += 0.5 * (double)v->size;
 		size_t new_size = v->size * sizeof(vec_t);
 
-		return ((v->vec = realloc(v->vec, new_size)) == NULL) ? FALSE : TRUE;
+		return ((v->vec = realloc(v->vec, new_size)) == NULL) ? false : true;
 	}
 	
-	return TRUE;
+	return true;
 }
 
 bool vec_is_empty(const VECTOR v)

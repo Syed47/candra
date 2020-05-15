@@ -8,25 +8,23 @@
 #include <math.h>
 #include <errno.h>
 
-#define MAX_STR_LEN 32
-
-typedef char* STRING;
+#include "../core/core.h"
 
 typedef struct __cvector__
 {
-    STRING* vec;
+    string_t* vec;
     size_t size;
     size_t i;
 } cvector_t;
 
 typedef cvector_t* CVECTOR;
 
-CVECTOR new_cvector(void);
-void dis_cvector(CVECTOR v);
+CVECTOR  new_cvector(void);
+void     dis_cvector(CVECTOR v);
 
-size_t cvec_size(const CVECTOR v);
-int cvec_is_empty(const CVECTOR v);
-int cvec_add(CVECTOR v, const STRING val);
-STRING cvec_get(const CVECTOR v, int i);
+size_t   cvec_size(const CVECTOR v);
+int      cvec_is_empty(const CVECTOR v);
+int      cvec_add(CVECTOR v, const string_t val);
+string_t cvec_get(const CVECTOR v, int i);
 
 #endif

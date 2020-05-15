@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <errno.h>
+#include <stdbool.h>
 
 typedef int vec_t;
-typedef enum { FALSE, TRUE } bool;
 
 typedef struct __vector__
 {
@@ -20,7 +20,7 @@ typedef struct __vector__
 typedef vector_t* VECTOR;
 
 VECTOR new_vector(void);
-void dis_vector(VECTOR v);
+void   dis_vector(VECTOR v);
 
 size_t vec_size(const VECTOR v);
 bool   vec_is_empty(const VECTOR v);

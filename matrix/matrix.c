@@ -10,9 +10,14 @@ MATRIX new_matrix(int n, ...)
     }
     MATRIX __m = malloc(sizeof *__m);
     __m->ncols = n;
-    __m->names = malloc(sizeof(char *) * __m->ncols);
-    __m->values = malloc(sizeof(VECTOR) * __m->ncols);
-    __m->max_name_len = MAX_STR_LEN;
+    __m->cols = malloc(sizeof(column) * __m->ncols);
+    __m->cols->namelen = MAX_STR_LEN;
+
+     for (int i = 0; i < __m->ncols; ++i)
+     {
+        __m->cols[i].name   = malloc(sizeof(char) * __m->cols->namelen);
+        __m->cols[i].value = malloc(sizeof(VALUES));
+     }
 
     va_list arg_list;
     va_start(arg_list, n);
@@ -20,15 +25,15 @@ MATRIX new_matrix(int n, ...)
     for (; i < __m->ncols; i++)
     {
         const char* tmp_name = va_arg(arg_list, char *);
-        __m->names[i] = malloc(sizeof(char) * (__m->max_name_len + 1));
-        strncpy(__m->names[i], tmp_name, __m->max_name_len);
-        __m->names[i][__m->max_name_len] = '\0';
+        __m->cols[i].name = malloc(sizeof(char) * (__m->cols->namelen + 1));
+        strncpy(__m->cols[i].name, tmp_name, __m->cols->namelen);
+        __m->cols[i].name[__m->cols->namelen] = '\0';
         
-        if (__m->names[i][0] == '$')
+        if (__m->cols[i].name[0] == '$')
         {
-            __m->values[i] = (CVECTOR) new_cvector();
+			__m->cols[i].value = (CVECTOR) new_cvector();
         } else {
-            __m->values[i] = (VECTOR) new_vector();
+			__m->cols[i].value = (VECTOR) new_vector();
         }
     }
     va_end(arg_list);
@@ -36,16 +41,14 @@ MATRIX new_matrix(int n, ...)
     return __m;
 }
 
-VALUES mat_select(const MATRIX m, const STRING tag)
+VALUES mat_select(const MATRIX m, const string_t col_name)
 {
     VALUES vec = NULL;
-    int i = 0;
-    while (i < m->ncols)
+    int i = -1;
+    while (++i < mat_ncols(m))
     {
-
-        if (strncmp(m->names[i], tag, m->max_name_len) == 0)
-            vec = m->values[i];
-        i++;
+        if (strncmp(m->cols[i].name, col_name, m->cols->namelen) == 0)
+            vec = m->cols[i].value;
     }
     return vec;
 }
@@ -53,27 +56,32 @@ VALUES mat_select(const MATRIX m, const STRING tag)
 MATRIX mat_mutate(MATRIX m, unsigned int n, ...)
 {
     m->ncols += n;
-    m->names = realloc(m->names, sizeof(NAMES) * m->ncols);
-    m->values = realloc(m->values, sizeof(VALUES) * m->ncols);
+    size_t delta = mat_ncols(m) - n;
+
+    m->cols = realloc(m->cols, sizeof(column) * mat_ncols(m));
+    for (size_t i = delta; i < n; i++)
+    {
+		m->cols[i].name = malloc(sizeof(char) * m->cols->namelen);
+		m->cols[i].value = malloc(sizeof(VALUES));
+    }
 
     va_list arg_list;
     va_start(arg_list, n);
-    size_t i = m->ncols - n;
 
-    for (; i < m->ncols; ++i)
+    for (size_t i = delta; i < mat_ncols(m); ++i)
     {
         const char* tmp_name = va_arg(arg_list, char*);
-        m->names[i] = malloc(sizeof(char) * (m->max_name_len + 1));
-        strncpy(m->names[i], tmp_name, m->max_name_len);
-        m->names[i][m->max_name_len] = '\0';
-        m->values[i] = new_vector();
+        m->cols[i].name = malloc(sizeof(char) * (m->cols->namelen + 1));
+		strncpy(m->cols[i].name, tmp_name, m->cols->namelen);
+        m->cols[i].name[m->cols->namelen] = '\0';
+		m->cols[i].value = new_vector();
     }
     va_end(arg_list);
     
     return m;
 }
 
-void mat_print_col(const MATRIX m, const STRING col)
+void mat_print_col(const MATRIX m, const string_t col)
 {
     VALUES v = mat_select(m, col);
     if (v != NULL)
@@ -97,117 +105,49 @@ void mat_print_col(const MATRIX m, const STRING col)
     }
 }
 
-void mat_append(MATRIX m, const STRING col, void* data)
+void mat_append(MATRIX m, const string_t col, void* data)
 {
-
+    // working on this one
 }
 
-// working on this function
-void mat_glimpse(const MATRIX m)
-{
-    if (m == NULL) exit(EXIT_FAILURE);
-
-    int is_str_col = 0,
-        col_size = (int)vec_size(m->values[0]),
-        cols = m->ncols;
-
-    size_t delta = 0;
-    
-    mat_cols(m);
-
-    for (int i = 0; i < col_size; ++i)
-    {
-        for (int j = 0; j < cols; ++j)
-        {
-            STRING name = m->names[j];
-            VECTOR values = mat_select(m, name);
-            is_str_col = mat_strcol(m, name);
-
-            if (is_str_col)
-            {
-                STRING s = cvec_get((CVECTOR)values, i);
-                delta = strlen(name) - strlen(s);
-                if (delta < 0)
-                {
-                    for (int i = 0; i < strlen(s) + delta; i++)
-                        printf("%c", s[i]);
-                    printf("%s", "|");
-                } else {
-                    printf("%s%s", "|", s);
-                }
-            }
-            else
-            {
-                int x = vec_get(values, i);
-                printf("%s%d", "|", x);
-                delta = strlen(name) - numlen(x);
-            }
-            // printf("\nDELTA %zu\n", delta);
-
-            for (int k = 0; k < delta && j + 1 != cols; ++k)
-                printf("%s", " ");
-        }
-        puts("");
-    }
-    // printf("\nlen %zu\n", numlen(999));
-}
-
-int mat_col_exist(const MATRIX m, const STRING col)
+int mat_col_exist(const MATRIX m, const string_t col)
 {
     int i = 0;
-    while (i < m->ncols && strncmp(m->names[i], col, m->max_name_len) != 0)
+    while (i < mat_ncols(m) && strncmp(m->cols[i].name, col, m->cols->namelen) != 0)
         i++;
     // returns the cordinal number (index + 1), not index
-    return i == m->ncols ? 0 : i + 1;
+    return i == mat_ncols(m) ? 0 : i + 1;
 }
 
-int mat_strcol(const MATRIX m, const STRING col)
+int mat_strcol(const MATRIX m, const string_t col)
 {
     return mat_col_exist(m, col) && col[0] == '$';
 }
 
-void mat_cols(const MATRIX m)
+void mat_pnames(const MATRIX m)
 {
     int i = 0;
-    for (; i < m->ncols; i++)
-        printf("%s%s", i == 0 ? "" : " | ", m->names[i]);
+    for (; i < mat_ncols(m); i++)
+        printf("%s%s", i == 0 ? "" : " | ", m->cols[i].name);
     puts("");
 }
 
-size_t numlen(size_t num)
+int mat_ncols(const MATRIX m)
 {
-    size_t n = 0;
-    do
-    {
-        ++n;
-        num /= 10;
-    } while (num);
-    return n;
-}
-
-size_t max(size_t a, size_t b)
-{
-    return a > b ? a : b;
-}
-
-size_t min(size_t a, size_t b)
-{
-    return a < b ? a : b;
+    return m->ncols;
 }
 
 void dis_matrix(MATRIX m)
 {
     m->ncols = 0;
-    m->max_name_len = 0;
+    m->cols->namelen = 0;
     for (size_t i = 0; i < m->ncols; ++i)
     {
-        free(m->names[i]);
-        free(m->values[i]);
+        free(m->cols[i].name);
+        free(m->cols[i].value);
     }
-    free(m->names);
-    free(m->values);
+    free(m->cols);
     free(m);
-    m->names = NULL;
-    m->values = NULL;
+    m->cols = NULL;
     m = NULL;
 }
