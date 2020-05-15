@@ -24,7 +24,7 @@ void     dis_cvector(CVECTOR v);
 
 size_t   cvec_size(const CVECTOR v);
 int      cvec_is_empty(const CVECTOR v);
-int      cvec_add(CVECTOR v, const string_t val);
+int      cvec_add(CVECTOR v, const string_t val); 
 string_t cvec_get(const CVECTOR v, int i);
 
 #endif
