@@ -1,7 +1,7 @@
 
 #include "matrix.h"
 
-MATRIX new_matrix(int n, ...)
+MATRIX MATRIX_INIT(int n, ...)
 {
     if (n < 0)
     {
@@ -10,14 +10,15 @@ MATRIX new_matrix(int n, ...)
     }
     MATRIX __m = malloc(sizeof *__m);
     __m->ncols = n;
+    __m->schema = (string_t*)malloc(sizeof(char*) * n);
     __m->cols = malloc(sizeof(column) * __m->ncols);
     __m->cols->namelen = MAX_STR_LEN;
 
-     for (int i = 0; i < __m->ncols; ++i)
-     {
-        __m->cols[i].name   = malloc(sizeof(char) * __m->cols->namelen);
+    for (int i = 0; i < __m->ncols; ++i)
+    {
+        __m->cols[i].name = malloc(sizeof(char) * __m->cols->namelen);
         __m->cols[i].value = malloc(sizeof(VALUES));
-     }
+    }
 
     va_list arg_list;
     va_start(arg_list, n);
@@ -32,8 +33,12 @@ MATRIX new_matrix(int n, ...)
         if (__m->cols[i].name[0] == '$')
         {
 			__m->cols[i].value = (CVECTOR) new_cvector();
+            __m->schema[i] = malloc(sizeof(char) * MAX_STR_LEN);
+            strncpy(__m->schema[i], SCHEMA_STRING, MAX_STR_LEN);
         } else {
 			__m->cols[i].value = (VECTOR) new_vector();
+            __m->schema[i] = malloc(sizeof(char) * MAX_STR_LEN);
+            strncpy(__m->schema[i], SCHEMA_NUMBER, MAX_STR_LEN);
         }
     }
     va_end(arg_list);
@@ -59,6 +64,8 @@ MATRIX mat_mutate(MATRIX m, unsigned int n, ...)
     size_t delta = mat_ncols(m) - n;
 
     m->cols = realloc(m->cols, sizeof(column) * mat_ncols(m));
+    m->schema = realloc(m->schema, sizeof(char*) * mat_ncols(m));
+
     for (size_t i = delta; i < n; i++)
     {
 		m->cols[i].name = malloc(sizeof(char) * m->cols->namelen);
@@ -74,7 +81,16 @@ MATRIX mat_mutate(MATRIX m, unsigned int n, ...)
         m->cols[i].name = malloc(sizeof(char) * (m->cols->namelen + 1));
 		strncpy(m->cols[i].name, tmp_name, m->cols->namelen);
         m->cols[i].name[m->cols->namelen] = '\0';
-		m->cols[i].value = new_vector();
+        if (m->cols[i].name[0] == '$')
+        {
+            m->cols[i].value = (CVECTOR) new_cvector();
+            m->schema[i] = malloc(sizeof(char) * MAX_STR_LEN);
+            strncpy(m->schema[i], SCHEMA_STRING, MAX_STR_LEN);
+        } else {
+            m->cols[i].value = (VECTOR) new_vector();
+            m->schema[i] = malloc(sizeof(char) * MAX_STR_LEN);
+            strncpy(m->schema[i], SCHEMA_NUMBER, MAX_STR_LEN);
+        }
     }
     va_end(arg_list);
     
@@ -92,22 +108,52 @@ void mat_print_col(const MATRIX m, const string_t col)
 
         if (is_str_col)
         {
-            printf("\n[%s (%d|str)]\n\n", col + 1, size);
+            printf("\n*[%s (%d|str)]\n", col + 1, size);
+            puts("-----------------");
             for (; i < size; ++i)
-                printf("-| %s\n", cvec_get(v, i));
+                printf("%d| %s\n", i + 1, cvec_get(v, i));
         } else if (!is_str_col) {
-            printf("\n[%s (%d|num)]\n\n", col, size);
+            printf("\n*[%s (%d|num)]\n", col, size);
+            puts("-----------------");
             for (; i < size; ++i)
-                printf("-| %d\n", vec_get(v, i));
+                printf("%d| %d\n", i + 1, vec_get(v, i));
         }
     } else {
         printf("\n[%s] does not exist.\n", col);
     }
 }
 
-void mat_append(MATRIX m, const string_t col, void* data)
+
+MATRIX mat_append(MATRIX m, int n,  ...)
 {
-    // working on this one
+    va_list arg_list;
+    va_start(arg_list, n);
+    string_t* schema = mat_schema(m);
+    int i = -1;
+    while (++i < n)
+    {
+        if (STR_EQUALS(schema[i], SCHEMA_NUMBER))
+        {
+            int x = va_arg(arg_list, int);
+            vec_push(m->cols[i].value, x);
+        } 
+        else if (STR_EQUALS(schema[i], SCHEMA_STRING))
+        {
+            char* x = va_arg(arg_list, string_t);
+            cvec_push(m->cols[i].value, x);
+        } else {
+            puts("Type Unknown Incountered. The value is avoided.");
+        }
+    }
+
+    for (; i < mat_ncols(m); ++i)
+    {
+        if (mat_strcol(m, m->cols[i].name))
+            cvec_push(m->cols[i].value, NA);
+        else
+            vec_push(m->cols[i].value, NaN);
+    }
+    return m;
 }
 
 int mat_col_exist(const MATRIX m, const string_t col)
@@ -132,6 +178,21 @@ void mat_pnames(const MATRIX m)
     puts("");
 }
 
+string_t* mat_schema(const MATRIX m)
+{
+    return m->schema;
+}
+
+void mat_pschema(const MATRIX m)
+{
+    int i = -1;
+    while(++i < mat_ncols(m))
+    {
+        printf("%s%s", i == 0 ? "" : " | ", m->schema[i]);
+    }
+    puts("");
+}
+
 int mat_ncols(const MATRIX m)
 {
     return m->ncols;
@@ -145,9 +206,12 @@ void dis_matrix(MATRIX m)
     {
         free(m->cols[i].name);
         free(m->cols[i].value);
+        free(m->schema[i]);
     }
     free(m->cols);
+    free(m->schema);
     free(m);
     m->cols = NULL;
+    m->schema = NULL;
     m = NULL;
 }

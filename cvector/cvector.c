@@ -26,13 +26,13 @@ string_t cvec_get(const CVECTOR v, int i)
     if (v != NULL && !(i > -1 && i < v->i))
     {
         fprintf(stderr, "\nError: Invalid memory access not allowed <%d>.\n", i);
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     return v->vec[i];
 }
 
-int cvec_add(CVECTOR v, const string_t val)
+int cvec_push(CVECTOR v, const string_t val)
 {
     string_t tmp = val;
     strncpy(v->vec[v->i], tmp, MAX_STR_LEN);
@@ -53,6 +53,13 @@ int cvec_add(CVECTOR v, const string_t val)
 int cvec_is_empty(const CVECTOR v)
 {
     return v->i == 0;
+}
+
+int cvec_indexof(const CVECTOR v, const string_t val)
+{
+    int i = -1;
+    while (++i < cvec_size(v) && strncmp(cvec_get(v, i), val, MAX_STR_LEN) != 0);
+    return i == cvec_size(v) ? -1 : i;
 }
 
 void dis_cvector(CVECTOR v)

@@ -21,13 +21,13 @@ vec_t vec_get(const VECTOR v, int i)
 	if (v != NULL && !(i > -1 && i < v->i))
 	{
 		fprintf(stderr, "\nError: Invalid memory access not allowed <%d>.\n", i);
-		exit(EXIT_FAILURE);
+		return INT32_MIN;
 	}
 
 	return *((*v).vec + i);
 }
 
-bool vec_add(VECTOR v, vec_t val)
+bool vec_push(VECTOR v, vec_t val)
 {
 	*((*v).vec + (*v).i) = val;
 	v->i++;
@@ -46,6 +46,13 @@ bool vec_add(VECTOR v, vec_t val)
 bool vec_is_empty(const VECTOR v)
 {
 	return (*v).i == 0;
+}
+
+int vec_indexof(const VECTOR v, vec_t val)
+{
+	int i = -1;
+	while (++i < vec_size(v) && vec_get(v, i) != val);
+	return i == vec_size(v) ? -1 : i;
 }
 
 void dis_vector(VECTOR v)

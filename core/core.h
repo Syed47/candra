@@ -2,6 +2,10 @@
 #ifndef core_h
 #define core_h
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #define MAX_STR_LEN 32
 
 #define typename(x) _Generic((x),                     \
@@ -25,7 +29,13 @@
 	int *: "pointer to int",                          \
 	default: "other")
 
+#define TYPECMP(a, b) \
+	strncmp(typename(a), typename(b), MAX_STR_LEN) == 0
+
+#define STR_EQUALS(a, b) \
+	strncmp(a, b, MAX_STR_LEN) == 0
 
 typedef char* string_t;
+
 
 #endif

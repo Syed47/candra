@@ -24,7 +24,8 @@ void   dis_vector(VECTOR v);
 
 size_t vec_size(const VECTOR v);
 bool   vec_is_empty(const VECTOR v);
-bool   vec_add(VECTOR v, vec_t val);
+bool   vec_push(VECTOR v, vec_t val);
 vec_t  vec_get(const VECTOR v, int i);
+int    vec_indexof(const VECTOR v, vec_t val);
 
 #endif
