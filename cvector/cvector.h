@@ -26,6 +26,7 @@ size_t   cvec_size(const CVECTOR v);
 int      cvec_is_empty(const CVECTOR v);
 int      cvec_push(CVECTOR v, const string_t val); 
 string_t cvec_get(const CVECTOR v, int i);
-int   cvec_indexof(const CVECTOR v, const string_t val);
+int      cvec_indexof(const CVECTOR v, const string_t val);
+void     cvec_replace(CVECTOR v, size_t index, string_t val);
 
 #endif

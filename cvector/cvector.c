@@ -23,9 +23,9 @@ size_t cvec_size(const CVECTOR v)
 
 string_t cvec_get(const CVECTOR v, int i)
 {
-    if (v != NULL && !(i > -1 && i < v->i))
+    if (v != NULL && !(i > -1 || i < v->i))
     {
-        fprintf(stderr, "\nError: Invalid memory access not allowed <%d>.\n", i);
+        LOG_ERROR("Invalid memory access not allowed <%d>.\n", i);
         return NULL;
     }
 
@@ -48,6 +48,12 @@ int cvec_push(CVECTOR v, const string_t val)
     }
 
     return 1;
+}
+
+void cvec_replace(CVECTOR v, size_t index, string_t val)
+{
+    EXIT_ERROR(index < 0 || index >= cvec_size(v), "cannot replace out-of-bound value");
+    strncpy(v->vec[index], val, MAX_STR_LEN);
 }
 
 int cvec_is_empty(const CVECTOR v)

@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <stdbool.h>
 
+#include "../core/core.h"
+
 typedef int vec_t;
 
 typedef struct __vector__
@@ -27,5 +29,6 @@ bool   vec_is_empty(const VECTOR v);
 bool   vec_push(VECTOR v, vec_t val);
 vec_t  vec_get(const VECTOR v, int i);
 int    vec_indexof(const VECTOR v, vec_t val);
+void   vec_replace(VECTOR v, size_t index, vec_t val);
 
 #endif

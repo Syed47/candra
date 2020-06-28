@@ -35,6 +35,21 @@
 #define STR_EQUALS(a, b) \
 	strncmp(a, b, MAX_STR_LEN) == 0
 
+// LOGGER
+
+#define LOG printf
+
+#define LOG_MSG(msg) { LOG("%s.\n", msg); }
+
+#define LOG_ERROR(...) { fprintf (stderr, "Error: "); fprintf(stderr, __VA_ARGS__); fprintf(stderr, ".\n");  } \
+
+#define SUPER_EXIT() { exit(EXIT_FAILURE); }
+
+#define EXIT_ERROR(condition, ...) { if (condition) { LOG_ERROR(__VA_ARGS__); SUPER_EXIT(); } }
+
+
+
+
 typedef char* string_t;
 
 
