@@ -34,8 +34,7 @@ string_t cvec_get(const CVECTOR v, int i)
 
 int cvec_push(CVECTOR v, const string_t val)
 {
-    string_t tmp = val;
-    strncpy(v->vec[v->i], tmp, MAX_STR_LEN);
+    strncpy(v->vec[v->i], val, MAX_STR_LEN);
     v->vec[v->i][MAX_STR_LEN] = '\0';
     v->i++;
 
